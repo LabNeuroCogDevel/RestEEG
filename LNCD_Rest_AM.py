@@ -70,37 +70,34 @@ def main():
         "In this task you will do X, Y, Z. (press spacebar)"
         "The minute will begin after the next beep.")
 
-### THE EXPERIMENT - EYES OPEN BLOCKS ###
+    ### THE EXPERIMENT - EYES OPEN BLOCKS ###
     for block in blocks:
         if block == 'open':
-            show_instr(win, 
+            instructions = ( 
                 "The next block will be one minute with your\n\n"
                 "EYES OPEN\n\n"
                 "The minute will begin when you hear a beep \n\n"
                 "When the minute is up, you will hear another beep and the plus sign in the middle of the screen will disappear, which will be your signal that you can relax \n\n"
                 "The minute will begin after the next beep...\n\n")
-            ### add beep here ###
-            #pp.setData(10) # wait 100ms setData(0) # TODO
-            show_fix(win, duration=3)
-            #pp.setData(10)
-            ### add beep here ###
-            show_instr(win, 
-                "You can relax...")
-
-    
-### THE EXPERIMENT - EYES CLOSED BLOCKS ###
+            trigger = 200
+            pulse = 2
+            sound = "Correct.wav"
+        ### THE EXPERIMENT - EYES CLOSED BLOCKS ###
         elif block == 'closed':
-            show_instr(win,
-                "The next block will be one minute with your\n\n"
-                "EYES CLOSED\n\n"
-                "Please close your eyes when you hear the next beep\n\n"
-                "When the minute is up, you will hear a different beep, which will be your signal that you can open your eyes and relax \n\n"
-                "The minute will begin after this next beep...\n\n")
-            ### add beep here ###
-            show_fix(win, duration=3)
-            ### add beep here ###
-            show_instr(win, 
-                "You can relax...") #this was originally green font
+            instructions = ("The next block will be one minute with your\n\n"
+            "EYES CLOSED\n\n"
+            "Please close your eyes when you hear the next beep\n\n"
+            "When the minute is up, you will hear a different beep, which will be your signal that you can open your eyes and relax \n\n"
+            "The minute will begin after this next beep...\n\n")
+            trigger = 100
+            pulse = 1
+            
+        show_instr(win, instructions)
+        ### add beep here ###
+        show_fix(win, duration=3)
+        ### add beep here ###
+        show_instr(win, 
+            "You can relax...") #this was originally green font
 
 ### END OF TASK ###
     show_instr(win, 'Rest task is done.')
