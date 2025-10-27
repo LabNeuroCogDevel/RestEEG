@@ -10,7 +10,7 @@ import random
 import pandas as pd
 import numpy as np
 USE_TRIGGER = True
-NUM_OF_PULSES = 14
+NUM_OF_PULSES = 15
 
 ### DEFINING SOUND FILES ###
 open_sound = sound.Sound('Correct.wav')
@@ -56,25 +56,10 @@ def main():
     
 ### INTRODUCTION - INSTRUCTIONS ### 
     # place before any part of the experiment is called on #
-    # first page #
     instructions = (
-        "Resting Baseline Task\n\n"
-        "This task measures your brain's activity while it is not engaged in any challenging test, or while it is resting.")
-    show_instr(win, instructions)
-    
-    # second page #
-    instructions = (
-        "We will record your brain activity during 8 one minute-long blocks.\n\n"
-        "During some of the blocks we will ask you to close your eyes and keep them closed for the full minute.\n\n"
-        "During the other blocks we will ask you to keep your eyes open and look toward the plus sign in the middle of the screen.\n\n"
-        "We will mix up the order of the 'eyes open' and 'eyes closed' blocks, and you will not know which type of block is coming up until right before it starts.")
-    show_instr(win, instructions)
-    
-    # third page #
-    instructions = (
-        "You will hear a tone at the beginning of each block to let you know it is starting. A different tone will play one minute later to let you know that block has finished.\n\n"
-        "During all of the blocks, it is very important that you do your best to stay still and to be alert.\n\n"
-        "Get Ready...")
+        "Welcome to the LNCD resting task. Press spacebar to continue"
+        "In this task you will do X, Y, Z. (press spacebar)"
+        "The minute will begin after the next beep.")
     show_instr(win, instructions)
 
 ### PSEUDORANDOM BLOCK ORDER A and B ###
@@ -100,6 +85,7 @@ def main():
                 "The minute will begin after the next beep...\n\n")
             tone = open_sound
             trigger = 200
+            end_trigger = 201
             pulse = 2
         elif block == 'closed':
             instructions = (
@@ -109,6 +95,7 @@ def main():
                 "When the minute is up, you will hear a different beep, which will be your signal that you can open your eyes and relax \n\n"
                 "The minute will begin after this next beep...\n\n")
             trigger = 100
+            end_trigger = 101
             pulse = 1
             #tone = closed_sound
             tone = open_sound # TODO: USE CLOSED. but 
@@ -121,11 +108,12 @@ def main():
         send_trigger(128, sleeptime=.5)
         
         # indicatte block in status channel (100 = close, 200 = open)
-        send_trigger(trigger, 0.100)
+        send_trigger(trigger, sleeptime=.5)
         
         for pulsenumber in range(NUM_OF_PULSES):
             send_trigger(pulse, 0.1)
             show_fix(win, duration=4)  # 4 secs
+        send_trigger(end_trigger, 0.1) #signal end of block 
         send_trigger(129, 0.1) # stop recording
         show_instr(win, "You can relax...") #this was originally green font
 
