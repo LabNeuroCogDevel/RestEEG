@@ -9,10 +9,17 @@ import random
 import pandas as pd
 import numpy as np
 USE_TRIGGER = False
+NUM_OF_PULSES = 14
 
 ### DEFINING SOUND FILES ###
 open_sound = sound.Sound('Correct.wav')
 closed_sound = sound.Sound('633.wav')
+
+### DEFINING PARALLEL PORT GLOBALLY ###
+PORT = 53264  #connecting to the EEG hardware "/dev/ttyS0" might be a serial port
+if USE_TRIGGER:
+    pp = psychopy.parallel.ParallelPort(address=PORT)
+
 
 ### REST TASK FOR EEG ###
 def main():
@@ -23,21 +30,6 @@ def main():
     win = visual.Window([800, 600],
     color = 'black',
     fullscr = False) #set to True for fullscreen
-
-### IMPORTING AUDIO ###
-    #beep = sound.Sound(value=1000, secs=2) 
-
-### PARALLEL PORT SETUP ###
-    #from lncdtask.externalcom import ParallelPortEEG 
-    #import psychopy.parallel
-    #PORT = 53264  #connecting to the EEG hardware "/dev/ttyS0" might be a serial port
-    #pp = psychopy.parallel.ParallelPort(address=PORT)
-    #pp = ParallelPortEEG(address=PORT) 
-
-    # utilize the following throuhgout the experiment #
-    #pp.start() #start communication with EEG
-    #pp.send(10) #send signal/trigger to EEG via port 
-    #pp.stop()
 
 ### SUBJECT INFO ###
     #show box to get info before initiating the task
@@ -110,7 +102,7 @@ def main():
         send_trigger(128, sleeptime=.5) # start recording
         send_trigger(trigger, 0) # block trigger  100 or 200
         
-        for pulsenumber in range(15):
+        for pulsenumber in range(NUM_OF_PULSES):
             send_trigger(pulse, 0.1)
             show_fix(win, duration=4)  # 4 secs
         send_trigger(129, 0.1) # stop recording
@@ -133,16 +125,16 @@ def show_fix(win, duration=10):
     fixation = visual.TextStim(win, text='+', color='white', wrapWidth=1.5)
     fixation.draw()
     win.flip()
-    core.wait(duration) # duration 10 seconds for test but eventually 60 secs
+    core.wait(duration) 
 
 Seconds = int
 def send_trigger(value, sleeptime : Seconds):
      if not USE_TRIGGER:
         print(f"would send {value} and sleep {sleeptime}")
         return
-     send(value)
+     pp.SetData(value)
      core.wait(sleeptime)
-     send(0)
+     pp.SetData(0)
      
 def mark_and_quit():
     """
@@ -151,11 +143,6 @@ def mark_and_quit():
     event.waitKeys(keyList=['escape'])
     send_trigger(129, 0.1)
     core.quit()
-
-###PLAYING THE SOUND ###
-#def beep(win, sound):
-    #beep.play()
-    #core.wait(2)
     
 ### THIS IS TO START THE EXPERIMENT ###
 if __name__ == "__main__":
