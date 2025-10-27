@@ -4,21 +4,23 @@ fill in later for rest rewrite
 """
 ### LOADING ###
 from psychopy import visual, core, sound, event, gui  #importing key psychopy modules
+from psychopy import parallel
 import time
 import random
 import pandas as pd
 import numpy as np
-USE_TRIGGER = False
+USE_TRIGGER = True
 NUM_OF_PULSES = 14
 
 ### DEFINING SOUND FILES ###
 open_sound = sound.Sound('Correct.wav')
-closed_sound = sound.Sound('633.wav')
+#closed_sound = sound.Sound('633.wav')
 
 ### DEFINING PARALLEL PORT GLOBALLY ###
-PORT = 53264  #connecting to the EEG hardware "/dev/ttyS0" might be a serial port
+PORT = 0xD010  # set 2025-10-27; win7
 if USE_TRIGGER:
-    pp = psychopy.parallel.ParallelPort(address=PORT)
+    print(f"USING TRIGGER on {PORT}")
+    pp = parallel.ParallelPort(address=PORT)
 
 
 ### REST TASK FOR EEG ###
@@ -54,10 +56,25 @@ def main():
     
 ### INTRODUCTION - INSTRUCTIONS ### 
     # place before any part of the experiment is called on #
+    # first page #
     instructions = (
-        "Welcome to the LNCD resting task. Press spacebar to continue"
-        "In this task you will do X, Y, Z. (press spacebar)"
-        "The minute will begin after the next beep.")
+        "Resting Baseline Task\n\n"
+        "This task measures your brain's activity while it is not engaged in any challenging test, or while it is resting.")
+    show_instr(win, instructions)
+    
+    # second page #
+    instructions = (
+        "We will record your brain activity during 8 one minute-long blocks.\n\n"
+        "During some of the blocks we will ask you to close your eyes and keep them closed for the full minute.\n\n"
+        "During the other blocks we will ask you to keep your eyes open and look toward the plus sign in the middle of the screen.\n\n"
+        "We will mix up the order of the 'eyes open' and 'eyes closed' blocks, and you will not know which type of block is coming up until right before it starts.")
+    show_instr(win, instructions)
+    
+    # third page #
+    instructions = (
+        "You will hear a tone at the beginning of each block to let you know it is starting. A different tone will play one minute later to let you know that block has finished.\n\n"
+        "During all of the blocks, it is very important that you do your best to stay still and to be alert.\n\n"
+        "Get Ready...")
     show_instr(win, instructions)
 
 ### PSEUDORANDOM BLOCK ORDER A and B ###
@@ -93,14 +110,18 @@ def main():
                 "The minute will begin after this next beep...\n\n")
             trigger = 100
             pulse = 1
-            tone = closed_sound
+            #tone = closed_sound
+            tone = open_sound # TODO: USE CLOSED. but 
         
         ## Run block - either open or closed. settings from above
         show_instr(win, instructions)
         win.flip() # empty screen "tone" slide ineprime
         tone.play()
-        send_trigger(128, sleeptime=.5) # start recording
-        send_trigger(trigger, 0) # block trigger  100 or 200
+        # tell biosemi to start recording data file
+        send_trigger(128, sleeptime=.5)
+        
+        # indicatte block in status channel (100 = close, 200 = open)
+        send_trigger(trigger, 0.100)
         
         for pulsenumber in range(NUM_OF_PULSES):
             send_trigger(pulse, 0.1)
@@ -132,9 +153,9 @@ def send_trigger(value, sleeptime : Seconds):
      if not USE_TRIGGER:
         print(f"would send {value} and sleep {sleeptime}")
         return
-     pp.SetData(value)
+     pp.setData(value)
      core.wait(sleeptime)
-     pp.SetData(0)
+     pp.setData(0)
      
 def mark_and_quit():
     """
