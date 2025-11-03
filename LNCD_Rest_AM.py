@@ -5,6 +5,7 @@ fill in later for rest rewrite
 ### LOADING ###
 from psychopy import visual, core, sound, event, gui  #importing key psychopy modules
 from psychopy import parallel
+from psychopy.sound.audioclip import AudioClip
 import time
 import random
 import pandas as pd
@@ -13,8 +14,14 @@ USE_TRIGGER = True
 NUM_OF_PULSES = 15
 
 ### DEFINING SOUND FILES ###
-open_sound = sound.Sound('Correct.wav')
-#closed_sound = sound.Sound('633.wav')
+sound = sound.Sound()
+open_snd = 'Correct.wav'
+close_snd = '633.wav'
+def load_snd(file, sampleRate=sound.sampleRate):
+    snddata = AudioClip.load(file)
+    snddata.resample(sampleRate)
+    return snddata
+
 
 ### DEFINING PARALLEL PORT GLOBALLY ###
 PORT = 0xD010  # set 2025-10-27; win7
@@ -75,6 +82,11 @@ def main():
 
     ### THE EXPERIMENT - EYES OPEN BLOCKS ###
     for block in blocks:
+
+        # free audio sink when timing doesn't matter -- no pending action or trigger
+        # takes 10ms
+        sound.stop()
+
         ### EXPERIMENT BLOCK SETTINGS - EYES CLOSED BLOCKS ###
         if block == 'open':
             instructions = (
@@ -83,7 +95,7 @@ def main():
                 "The minute will begin when you hear a beep \n\n"
                 "When the minute is up, you will hear another beep and the plus sign in the middle of the screen will disappear, which will be your signal that you can relax \n\n"
                 "The minute will begin after the next beep...\n\n")
-            tone = open_sound
+            sound.setSound(open_snd)
             trigger = 200
             end_trigger = 201
             pulse = 2
@@ -97,13 +109,12 @@ def main():
             trigger = 100
             end_trigger = 101
             pulse = 1
-            #tone = closed_sound
-            tone = open_sound # TODO: USE CLOSED. but 
+            sound.setSound(close_snd)
         
         ## Run block - either open or closed. settings from above
         show_instr(win, instructions)
-        win.flip() # empty screen "tone" slide ineprime
-        tone.play()
+        win.flip() # empty screen "tone" slide in eprime
+        sound.play()
         # tell biosemi to start recording data file
         send_trigger(128, sleeptime=.5)
         
@@ -155,4 +166,4 @@ def mark_and_quit():
     
 ### THIS IS TO START THE EXPERIMENT ###
 if __name__ == "__main__":
-    main() 
+    main()
