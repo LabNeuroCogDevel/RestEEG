@@ -9,7 +9,7 @@ import time
 import random
 import pandas as pd
 import numpy as np
-USE_TRIGGER = True
+USE_TRIGGER = False
 NUM_OF_PULSES = 15
 
 ### DEFINING SOUND FILES ###
@@ -22,6 +22,11 @@ if USE_TRIGGER:
     print(f"USING TRIGGER on {PORT}")
     pp = parallel.ParallelPort(address=PORT)
 
+### TEST FUNCTION FOR TIMING ###
+def timemark(msg):
+    t = time.time() #time in seconds
+    print(f"{t:0.5f}\t{msg}") #function for 5 numbers shown for seconds
+    return t
 
 ### REST TASK FOR EEG ###
 def main():
@@ -108,11 +113,14 @@ def main():
         send_trigger(128, sleeptime=.5)
         
         # indicatte block in status channel (100 = close, 200 = open)
+        timemark('start_block')
         send_trigger(trigger, sleeptime=.5)
         
         for pulsenumber in range(NUM_OF_PULSES):
+            timemark('inner_pulse')
             send_trigger(pulse, 0.1)
             show_fix(win, duration=4)  # 4 secs
+        timemark('end_block')
         send_trigger(end_trigger, 0.1) #signal end of block 
         send_trigger(129, 0.1) # stop recording
         show_instr(win, "You can relax...") #this was originally green font
@@ -140,6 +148,7 @@ Seconds = int
 def send_trigger(value, sleeptime : Seconds):
      if not USE_TRIGGER:
         print(f"would send {value} and sleep {sleeptime}")
+        core.wait(sleeptime)
         return
      pp.setData(value)
      core.wait(sleeptime)
