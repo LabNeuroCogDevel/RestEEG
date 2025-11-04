@@ -117,7 +117,7 @@ def main():
 
 
     ### FORCE QUIT  - NB. must be set afer win is created
-    event.globalKeys.add(key="q", func=mark_and_quit, name="shutdown")
+    event.globalKeys.add(key="escape", func=mark_and_quit, name="shutdown")
 
     # preload the text object to show during fixation
     # Note: this takes ~10ms to create and only needs to happen once
@@ -128,14 +128,29 @@ def main():
     sub_id = subject_info["sub_id"]
     timepoint = subject_info["timepoint"]
     project = subject_info["project"]
+    print(f"sub_id:{sub_id}\timepoint:{timepoint}\project:{project}",file=log_fh)
 
     ### INTRODUCTION - INSTRUCTIONS ###
-    # place before any part of the experiment is called on #
+# place before any part of the experiment is called on #
+    # first page #
     instructions = (
-        "Welcome to the LNCD resting task. Press spacebar to continue"
-        "In this task you will do X, Y, Z. (press spacebar)"
-        "The minute will begin after the next beep."
-    )
+        "Resting Baseline Task\n\n"
+        "This task measures your brain's activity while it is not engaged in any challenging test, or while it is resting.")
+    show_instr(win, instructions)
+    
+    # second page #
+    instructions = (
+        "We will record your brain activity during 8 one minute-long blocks.\n\n"
+        "During some of the blocks we will ask you to close your eyes and keep them closed for the full minute.\n\n"
+        "During the other blocks we will ask you to keep your eyes open and look toward the plus sign in the middle of the screen.\n\n"
+        "We will mix up the order of the 'eyes open' and 'eyes closed' blocks, and you will not know which type of block is coming up until right before it starts.")
+    show_instr(win, instructions)
+    
+    # third page #
+    instructions = (
+        "You will hear a tone at the beginning of each block to let you know it is starting. A different tone will play one minute later to let you know that block has finished.\n\n"
+        "During all of the blocks, it is very important that you do your best to stay still and to be alert.\n\n"
+        "Get Ready...")
     show_instr(win, instructions)
 
     ### RANDOMIZED BLOCK SETUP ###
@@ -143,8 +158,7 @@ def main():
         blocks = A_ORDER
     else:
         blocks = B_ORDER  # else 50 percent B block will run
-
-    print(f"Block Order:{blocks}\nexapmle test line, rm me",file=log_fh)
+    print(f"Block Order:{blocks}",file=log_fh)
 
     ### THE EXPERIMENT - EYES OPEN BLOCKS ###
     for block in blocks:
