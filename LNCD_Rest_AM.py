@@ -13,12 +13,12 @@ import sys
 from psychopy import visual, core, sound, event, gui  # importing key psychopy modules
 from psychopy import parallel
 from psychopy.sound.audioclip import AudioClip
+import platform
 import time
 import random
 import pandas as pd
 import numpy as np
 
-USE_TRIGGER = False
 NUM_OF_PULSES = 15
 
 # block start trigger values. end values are +1 (101, 201). pulse are //100 (1, 2)
@@ -41,7 +41,20 @@ def load_snd(file, sampleRate=44100):
 
 
 ### DEFINING PARALLEL PORT GLOBALLY ###
-PORT = 0xD010  # set 2025-10-27; win7
+nodename = platform.uname().node
+print(f"running on {nodename}")
+
+# if on the actual linux EEG computer
+if nodename in ['eegtask']:
+    print(f"is linux EEG")
+    USE_TRIGGER = True
+    PORT = "/dev/parport0"
+    # for win7 PORT=0xD010  # set 2025-10-27; win7
+else:
+    print("WARNING: Unknown computer, not sending triggers")
+    PORT = None
+    USE_TRIGGER = False
+
 if USE_TRIGGER:
     print(f"USING TRIGGER on {PORT}")
     pp = parallel.ParallelPort(address=PORT)
@@ -67,8 +80,8 @@ def main():
             "SPA7T",
             "Habit",
         ],  # this creates a dropdown menu so we can specify project type
-        "sound": False,
-        "fullscreen": False,
+        "sound": True,
+        "fullscreen": True,
     }
 
     # creating a pop up dialog  box for entering info and if you cancel the script will end
@@ -76,6 +89,11 @@ def main():
     if not dlg.OK:  # If user presses cancel
         print("User cancelled the experiment.")
         sys.exit()
+
+    # TODO:
+    # file_name = f"{subject_info['subi_id']}_...._{time.time():.0f}.log"
+    # log_fh = open(file_name)
+    # print(log_fh, "info to write to file, block order")
 
     if subject_info["sound"]:
         sound_dev = sound.Sound()
@@ -89,6 +107,7 @@ def main():
         sound_dev.duration = .1
 
     ### WINDOW SETUP ###
+    # TODO: if/else on subject_info['fullscreen']
     win = visual.Window(
         [800, 600], color="black", fullscr=False
     )  # set to True for fullscreen
@@ -162,6 +181,8 @@ def main():
 
         ## Run block - either open or closed. settings from above
         show_instr(win, instructions)
+        # TODO: log start of block
+        # print(log_fh, "{time.time}\tstarting {block} (logged before trigger sent)")
 
         ## tone
         win.flip()  # empty screen "tone" slide in eprime
