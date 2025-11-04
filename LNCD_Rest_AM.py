@@ -10,6 +10,7 @@ fill in later for rest rewrite
 """
 ### LOADING ###
 import sys
+import os
 from psychopy import visual, core, sound, event, gui  # importing key psychopy modules
 from psychopy import parallel
 from psychopy.sound.audioclip import AudioClip
@@ -70,7 +71,7 @@ timemark.t = 0 # initialize cached timestamp
 
 ### REST TASK FOR EEG ###
 def main():
-    ### SUBJECT INFO ###
+    ### SUBJECT: INFO ###
     # show box to get info before initiating the task
     subject_info = {
         "sub_id": "",
@@ -89,9 +90,10 @@ def main():
         print("User cancelled the experiment.")
         sys.exit()
 
-    ### SETTING UP FILE NAME ###
-    file_name = f"{subject_info['subi_id']}_{time.time():.0f}_{subject_info['project']}.log"
-    log_fh = open(file_name)
+    ### SETTING UP FILE NAME AND CONTENTS ###
+    os.makedirs('log/', exist_ok=True) # make sure output directory exists
+    file_name = f"log/{subject_info['sub_id']}_{subject_info['project']}_{time.time():.0f}.log"
+    log_fh = open(file_name, 'w')
 
 
     if subject_info["sound"]:
@@ -107,11 +109,11 @@ def main():
 
     ### WINDOW SETUP ###
     # READY (maybe): if/else on subject_info['fullscreen']
-    if fullscreen = True: 
+    if subject_info['fullscreen'] == True: 
         win = visual.Window(color = "black", fullscr=True)
     else:
-    win = visual.Window(
-        [800, 600], color="black", fullscr=False)
+        win = visual.Window(
+            [800, 600], color="black", fullscr=False)
 
 
     ### FORCE QUIT  - NB. must be set afer win is created
@@ -124,7 +126,6 @@ def main():
 
     # extracting variables from the box
     sub_id = subject_info["sub_id"]
-    run_num = subject_info["run_num"]
     timepoint = subject_info["timepoint"]
     project = subject_info["project"]
 
@@ -142,7 +143,8 @@ def main():
         blocks = A_ORDER
     else:
         blocks = B_ORDER  # else 50 percent B block will run
-    print(log_fh, "Block order:", blocks)
+
+    print(f"Block Order:{blocks}\nexapmle test line, rm me",file=log_fh)
 
     ### THE EXPERIMENT - EYES OPEN BLOCKS ###
     for block in blocks:
@@ -183,7 +185,7 @@ def main():
         ## Run block - either open or closed. settings from above
         show_instr(win, instructions)
         # TODO: log start of block
-        print(log_fh, "{time.time()}\tstarting {block} (logged before trigger sent)")
+        print(f"{time.time()}\tstarting {block} (logged before trigger sent)",file=log_fh)
 
         ## tone
         win.flip()  # empty screen "tone" slide in eprime
