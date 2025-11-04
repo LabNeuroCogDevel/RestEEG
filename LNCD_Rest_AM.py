@@ -128,7 +128,7 @@ def main():
     sub_id = subject_info["sub_id"]
     timepoint = subject_info["timepoint"]
     project = subject_info["project"]
-    print(f"sub_id:{sub_id}\timepoint:{timepoint}\project:{project}",file=log_fh)
+    print(f"sub_id:{sub_id}\ntimepoint:{timepoint}\nproject:{project}",file=log_fh)
 
     ### INTRODUCTION - INSTRUCTIONS ###
 # place before any part of the experiment is called on #
