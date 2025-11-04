@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "psychopy",
+# ]
+# ///
 """
 fill in later for rest rewrite
 """
 ### LOADING ###
+import sys
 from psychopy import visual, core, sound, event, gui  # importing key psychopy modules
 from psychopy import parallel
 from psychopy.sound.audioclip import AudioClip
@@ -14,13 +21,20 @@ import numpy as np
 USE_TRIGGER = False
 NUM_OF_PULSES = 15
 
+# block start trigger values. end values are +1 (101, 201). pulse are //100 (1, 2)
+TTL_EYES_CLOSED = 100
+TTL_EYES_OPEN = 200
+
 ### DEFINING SOUND FILES ###
-sound = sound.Sound()
-open_snd = "Correct.wav"
-close_snd = "633.wav"
+START_SND = "633.wav"
+END_SND = "Correct.wav"
+### PSEUDORANDOM BLOCK ORDER A and B ###
+A_ORDER = ["closed", "open", "open", "closed", "open", "closed", "closed", "open"]
+B_ORDER = ["open", "closed", "closed", "open", "closed", "open", "open", "closed"]
 
 
-def load_snd(file, sampleRate=sound.sampleRate):
+def load_snd(file, sampleRate=44100):
+    """Preload sound data"""
     snddata = AudioClip.load(file)
     snddata.resample(sampleRate)
     return snddata
@@ -36,20 +50,13 @@ if USE_TRIGGER:
 ### TEST FUNCTION FOR TIMING ###
 def timemark(msg):
     t = time.time()  # time in seconds
-    print(f"{t:0.5f}\t{msg}")  # function for 5 numbers shown for seconds
+    print(f"{t:0.5f}\t{t - timemark.t:0.5f}\t{msg}")  # function for 5 numbers shown for seconds
+    timemark.t = t  # cache time to report diff
     return t
-
+timemark.t = 0 # initialize cached timestamp
 
 ### REST TASK FOR EEG ###
 def main():
-    ### FORCE QUIT ###
-    event.globalKeys.add(key="escape", func=mark_and_quit, name="shutdown")
-
-    ### WINDOW SETUP ###
-    win = visual.Window(
-        [800, 600], color="black", fullscr=False
-    )  # set to True for fullscreen
-
     ### SUBJECT INFO ###
     # show box to get info before initiating the task
     subject_info = {
@@ -60,6 +67,8 @@ def main():
             "SPA7T",
             "Habit",
         ],  # this creates a dropdown menu so we can specify project type
+        "sound": False,
+        "fullscreen": False,
     }
 
     # creating a pop up dialog  box for entering info and if you cancel the script will end
@@ -67,6 +76,31 @@ def main():
     if not dlg.OK:  # If user presses cancel
         print("User cancelled the experiment.")
         sys.exit()
+
+    if subject_info["sound"]:
+        sound_dev = sound.Sound()
+    else:
+        # ugly mock of sound_dev for sound=No version
+        # here only b/c WF's laptop segfaults w/psyhcopy audio
+        sound_dev = lambda: None 
+        sound_dev.play = lambda: print("# not playing sound")
+        sound_dev.stop = lambda: None 
+        sound_dev.setSound = lambda _: None
+        sound_dev.duration = .1
+
+    ### WINDOW SETUP ###
+    win = visual.Window(
+        [800, 600], color="black", fullscr=False
+    )  # set to True for fullscreen
+
+
+    ### FORCE QUIT  - NB. must be set afer win is created
+    event.globalKeys.add(key="escape", func=mark_and_quit, name="shutdown")
+
+    # preload the text object to show during fixation
+    # Note: this takes ~10ms to create and only needs to happen once
+    fixation = visual.TextStim(win, text="+", color="white", wrapWidth=1.5)
+
 
     # extracting variables from the box
     sub_id = subject_info["sub_id"]
@@ -83,23 +117,18 @@ def main():
     )
     show_instr(win, instructions)
 
-    ### PSEUDORANDOM BLOCK ORDER A and B ###
-    A = ["closed", "open", "open", "closed", "open", "closed", "closed", "open"]
-    B = ["open", "closed", "closed", "open", "closed", "open", "open", "closed"]
-
     ### RANDOMIZED BLOCK SETUP ###
     if random.random() > 0.5:  # 50 percent of the time block A will run
-        blocks = A
+        blocks = A_ORDER
     else:
-        blocks = B  # else 50 percent B block will run
-    print("Block order:", blocks)  # if interested in logging the order of blocks
+        blocks = B_ORDER  # else 50 percent B block will run
+    print("Block order:", blocks)
 
     ### THE EXPERIMENT - EYES OPEN BLOCKS ###
     for block in blocks:
 
         # free audio sink when timing doesn't matter -- no pending action or trigger
         # takes 10ms
-        sound.stop()
 
         ### EXPERIMENT BLOCK SETTINGS - EYES CLOSED BLOCKS ###
         if block == "open":
@@ -110,9 +139,8 @@ def main():
                 "When the minute is up, you will hear another beep and the plus sign in the middle of the screen will disappear, which will be your signal that you can relax \n\n"
                 "The minute will begin after the next beep...\n\n"
             )
-            sound.setSound(open_snd)
-            trigger = 200
-            end_trigger = 201
+            block_start_trigger = TTL_EYES_OPEN
+            end_trigger = block_start_trigger + 1  # 201
             pulse = 2
         elif block == "closed":
             instructions = (
@@ -122,33 +150,51 @@ def main():
                 "When the minute is up, you will hear a different beep, which will be your signal that you can open your eyes and relax \n\n"
                 "The minute will begin after this next beep...\n\n"
             )
-            trigger = 100
-            end_trigger = 101
+            block_start_trigger = TTL_EYES_CLOSED
+            end_trigger = block_start_trigger + 1  # 101
             pulse = 1
-            sound.setSound(close_snd)
+        else:
+            raise Exception(f"Uknown block type {block}!")
+
+        # prepare sounds. wont play until start
+        sound_dev.stop()
+        sound_dev.setSound(START_SND)
 
         ## Run block - either open or closed. settings from above
         show_instr(win, instructions)
+
+        ## tone
         win.flip()  # empty screen "tone" slide in eprime
-        sound.play()
+        sound_dev.play()
+        core.wait(sound_dev.duration)
+
         # tell biosemi to start recording data file
         send_trigger(128, sleeptime=0.5)
 
         # indicatte block in status channel (100 = close, 200 = open)
-        b = timemark("start_block")
-        t = b
-        send_trigger(trigger, sleeptime=0.5)
+        start = timemark("start_block")
+        send_trigger(block_start_trigger, sleeptime=0.5)
 
+        # prep for fixation, not show to screen until flip
+        fixation.draw()
         for pulsenumber in range(NUM_OF_PULSES):
-            t2 = timemark("inner_pulse")
-            print(t2 - t)
-            t = t2
+            # total time between pulses is 4.1 secs
+            wait_end = core.getTime() + 4.1
             send_trigger(pulse, 0.1)
-            show_fix(win, duration=4)  # 4 secs
-        t = timemark("end_block")
-        print(t - b)
+            # only flip to show drawn fix cross on first pass
+            if pulsenumber == 0:
+                win.flip()
+
+            # likely wait ~4s, but flip might not have been instant
+            time_to_wait = wait_end - core.getTime()
+            core.wait(time_to_wait)
+
+        end = timemark("end_block")
         send_trigger(end_trigger, 0.1)  # signal end of block
         send_trigger(129, 0.1)  # stop recording
+        print(f"Block duration {end - start}")
+        sound_dev.setSound(END_SND)
+        sound_dev.play()
         show_instr(win, "You can relax...")  # this was originally green font
 
     ### END OF TASK ###
@@ -165,20 +211,11 @@ def show_instr(win, text):
     event.waitKeys(keyList=["space"])
 
 
-### FIXATION CROSS ###
-def show_fix(win, duration=10):
-    fixation = visual.TextStim(win, text="+", color="white", wrapWidth=1.5)
-    fixation.draw()
-    win.flip()
-    core.wait(duration)
-
-
-Seconds = int
-
+Seconds = float
 
 def send_trigger(value, sleeptime: Seconds):
     if not USE_TRIGGER:
-        print(f"would send {value} and sleep {sleeptime}")
+        timemark(f"trigger={value}, sleep {sleeptime}s")
         core.wait(sleeptime)
         return
     pp.setData(value)
@@ -190,7 +227,6 @@ def mark_and_quit():
     """
     Used to force quit. will send stop trigger to recording device before exiting
     """
-    event.waitKeys(keyList=["escape"])
     send_trigger(129, 0.1)
     core.quit()
 
