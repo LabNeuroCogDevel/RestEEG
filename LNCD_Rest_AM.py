@@ -95,7 +95,7 @@ def main():
 
 
     ### FORCE QUIT  - NB. must be set afer win is created
-    event.globalKeys.add(key="escape", func=mark_and_quit, name="shutdown")
+    event.globalKeys.add(key="q", func=mark_and_quit, name="shutdown")
 
     # preload the text object to show during fixation
     # Note: this takes ~10ms to create and only needs to happen once
