@@ -74,7 +74,6 @@ def main():
     # show box to get info before initiating the task
     subject_info = {
         "sub_id": "",
-        "run_num": "",
         "timepoint": "",
         "project": [
             "SPA7T",
@@ -90,10 +89,10 @@ def main():
         print("User cancelled the experiment.")
         sys.exit()
 
-    # TODO:
-    # file_name = f"{subject_info['subi_id']}_...._{time.time():.0f}.log"
-    # log_fh = open(file_name)
-    # print(log_fh, "info to write to file, block order")
+    ### SETTING UP FILE NAME ###
+    file_name = f"{subject_info['subi_id']}_{time.time():.0f}_{subject_info['project']}.log"
+    log_fh = open(file_name)
+
 
     if subject_info["sound"]:
         sound_dev = sound.Sound()
@@ -107,10 +106,12 @@ def main():
         sound_dev.duration = .1
 
     ### WINDOW SETUP ###
-    # TODO: if/else on subject_info['fullscreen']
+    # READY (maybe): if/else on subject_info['fullscreen']
+    if fullscreen = True: 
+        win = visual.Window(color = "black", fullscr=True)
+    else:
     win = visual.Window(
-        [800, 600], color="black", fullscr=False
-    )  # set to True for fullscreen
+        [800, 600], color="black", fullscr=False)
 
 
     ### FORCE QUIT  - NB. must be set afer win is created
@@ -141,7 +142,7 @@ def main():
         blocks = A_ORDER
     else:
         blocks = B_ORDER  # else 50 percent B block will run
-    print("Block order:", blocks)
+    print(log_fh, "Block order:", blocks)
 
     ### THE EXPERIMENT - EYES OPEN BLOCKS ###
     for block in blocks:
@@ -182,7 +183,7 @@ def main():
         ## Run block - either open or closed. settings from above
         show_instr(win, instructions)
         # TODO: log start of block
-        # print(log_fh, "{time.time}\tstarting {block} (logged before trigger sent)")
+        print(log_fh, "{time.time()}\tstarting {block} (logged before trigger sent)")
 
         ## tone
         win.flip()  # empty screen "tone" slide in eprime
