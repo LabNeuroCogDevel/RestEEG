@@ -129,9 +129,12 @@ def main():
     timepoint = subject_info["timepoint"]
     project = subject_info["project"]
     print(f"sub_id:{sub_id}\timepoint:{timepoint}\project:{project}",file=log_fh)
+    
+    ### REMOVE CURSOR FROM SCREEN ###
+    win.mouseVisible = False
 
     ### INTRODUCTION - INSTRUCTIONS ###
-# place before any part of the experiment is called on #
+    # place before any part of the experiment is called on #
     # first page #
     instructions = (
         "Resting Baseline Task\n\n"
