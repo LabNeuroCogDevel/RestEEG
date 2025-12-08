@@ -128,10 +128,14 @@ def main():
     sub_id = subject_info["sub_id"]
     timepoint = subject_info["timepoint"]
     project = subject_info["project"]
+<<<<<<< HEAD
     print(f"sub_id:{sub_id}\timepoint:{timepoint}\project:{project}",file=log_fh)
     
     ### REMOVE CURSOR FROM SCREEN ###
     win.mouseVisible = False
+=======
+    print(f"sub_id:{sub_id}\ntimepoint:{timepoint}\nproject:{project}",file=log_fh)
+>>>>>>> c220950b7442ca933f5b221f6a3d9efd0f9bb3c7
 
     ### INTRODUCTION - INSTRUCTIONS ###
     # place before any part of the experiment is called on #
